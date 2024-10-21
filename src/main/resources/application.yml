@@ -98,4 +98,4 @@ knife4j:
       default:
         api-rule: package
         api-rule-resources:
-          - com.zq.springbootinit.controller
+          - com.zq.zqbagu.controller
