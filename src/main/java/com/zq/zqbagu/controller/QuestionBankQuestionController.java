@@ -210,7 +210,7 @@ public class QuestionBankQuestionController {
      * @param request
      * @return
      */
-    @PostMapping("/delete")
+    @PostMapping("/remove")
     public BaseResponse<Boolean> removeQuestionBankQuestion(@RequestBody QuestionBankQuestionRemoveRequest questionBankQuestionRemoveRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionBankQuestionRemoveRequest == null,ErrorCode.PARAMS_ERROR);
         Long questionBankId = questionBankQuestionRemoveRequest.getQuestionBankId();
