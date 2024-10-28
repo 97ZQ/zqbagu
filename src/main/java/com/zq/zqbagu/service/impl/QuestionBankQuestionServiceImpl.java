@@ -23,6 +23,8 @@ import com.zq.zqbagu.service.UserService;
 import com.zq.zqbagu.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,11 +41,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQuestionMapper, QuestionBankQuestion> implements QuestionBankQuestionService {
 
-    @Resource
+    @Lazy
+    @Autowired
     private UserService userService;
-
+    @Lazy
+    @Autowired
     private QuestionService questionService;
-
+    @Lazy
+    @Autowired
     private QuestionBankService questionBankService;
 
     /**
