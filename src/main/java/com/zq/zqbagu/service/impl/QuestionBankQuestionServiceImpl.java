@@ -223,21 +223,28 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
         LambdaQueryWrapper<Question> questionLambdaQueryWrapper = Wrappers.lambdaQuery(Question.class)
                 .select(Question::getId)
                 .in(Question::getId, questionIdList);
-        List<Question> questionList = questionService.list(questionLambdaQueryWrapper);
+//        List<Question> questionList = questionService.list(questionLambdaQueryWrapper);
 
         // 合法的题目 id
         // 合法的题目 id
         List<Long> validQuestionIdList = questionService.listObjs(questionLambdaQueryWrapper, obj -> (Long) obj);
         ThrowUtils.throwIf(CollUtil.isEmpty(validQuestionIdList), ErrorCode.PARAMS_ERROR, "合法的题目列表为空");
 
-        // 价差哪些题目不存在于题库中，避免重复插入
+        // 查看哪些题目不存在于题库中，避免重复插入
         LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class).
                 eq(QuestionBankQuestion::getQuestionBankId, questionBankId).
-                notIn(QuestionBankQuestion::getQuestionId, validQuestionIdList);
-        List<QuestionBankQuestion> notExistQuestionList = this.list(lambdaQueryWrapper);
-        validQuestionIdList = notExistQuestionList.stream().
-                map(QuestionBankQuestion::getId).
-                collect(Collectors.toList());
+                in(QuestionBankQuestion::getQuestionId, validQuestionIdList);
+        List<QuestionBankQuestion> existQuestionList = this.list(lambdaQueryWrapper);
+//        validQuestionIdList = notExistQuestionList.stream().
+//                map(QuestionBankQuestion::getId).
+//                collect(Collectors.toList());
+        // 已存在于题库中的题目 id
+        Set<Long> existQuestionIdSet = existQuestionList.stream().
+                map(QuestionBankQuestion::getQuestionId).
+                collect(Collectors.toSet());
+        validQuestionIdList = validQuestionIdList.stream().filter(questionId ->{
+            return !existQuestionIdSet.contains(questionId);
+        }).collect(Collectors.toList());
         ThrowUtils.throwIf(CollUtil.isEmpty(validQuestionIdList), ErrorCode.PARAMS_ERROR, "所有题目都已存在于题库中");
         // 检查题库 id 是否存在
         QuestionBank questionBank = questionBankService.getById(questionBankId);
