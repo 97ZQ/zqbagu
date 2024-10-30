@@ -1,7 +1,9 @@
 package com.zq.zqbagu.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zq.zqbagu.common.ErrorCode;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -198,5 +201,68 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
         questionBankQuestionVOPage.setRecords(questionBankQuestionVOList);
         return questionBankQuestionVOPage;
     }
+
+
+    /**
+     * 批量添加题目到题库
+     * @param questionIdList
+     * @param questionBankId
+     * @param loginUser
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAddQuestionsToBank(List<Long> questionIdList, Long questionBankId, User loginUser) {
+        // 参数校验
+        ThrowUtils.throwIf(CollUtil.isEmpty(questionIdList), ErrorCode.PARAMS_ERROR, "题目列表为空");
+        ThrowUtils.throwIf(questionBankId == null || questionBankId <= 0, ErrorCode.PARAMS_ERROR, "题库非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        // 检查题目 id 是否存在
+        List<Question> questionList = questionService.listByIds(questionIdList);
+        // 合法的题目 id
+        List<Long> validQuestionIdList = questionList.stream()
+                .map(Question::getId)
+                .collect(Collectors.toList());
+        ThrowUtils.throwIf(CollUtil.isEmpty(validQuestionIdList), ErrorCode.PARAMS_ERROR, "合法的题目列表为空");
+        // 检查题库 id 是否存在
+        QuestionBank questionBank = questionBankService.getById(questionBankId);
+        ThrowUtils.throwIf(questionBank == null, ErrorCode.NOT_FOUND_ERROR, "题库不存在");
+        // 执行插入
+        for (Long questionId : validQuestionIdList) {
+            QuestionBankQuestion questionBankQuestion = new QuestionBankQuestion();
+            questionBankQuestion.setQuestionBankId(questionBankId);
+            questionBankQuestion.setQuestionId(questionId);
+            questionBankQuestion.setUserId(loginUser.getId());
+            boolean result = this.save(questionBankQuestion);
+            if (!result) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "向题库添加题目失败");
+            }
+        }
+    }
+
+    /**
+     * 批量从题库中移除题目
+     * @param questionIdList
+     * @param questionBankId
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchRemoveQuestionsFromBank(List<Long> questionIdList, Long questionBankId) {
+        // 参数校验
+        ThrowUtils.throwIf(CollUtil.isEmpty(questionIdList), ErrorCode.PARAMS_ERROR, "题目列表为空");
+        ThrowUtils.throwIf(questionBankId == null || questionBankId <= 0, ErrorCode.PARAMS_ERROR, "题库非法");
+        // 执行删除关联
+        for (Long questionId : questionIdList) {
+            // 构造查询
+            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                    .eq(QuestionBankQuestion::getQuestionId, questionId)
+                    .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
+            boolean result = this.remove(lambdaQueryWrapper);
+            if (!result) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "从题库移除题目失败");
+            }
+        }
+    }
+
+
 
 }

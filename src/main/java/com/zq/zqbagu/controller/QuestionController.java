@@ -14,10 +14,7 @@ import com.zq.zqbagu.common.ResultUtils;
 import com.zq.zqbagu.constant.UserConstant;
 import com.zq.zqbagu.exception.BusinessException;
 import com.zq.zqbagu.exception.ThrowUtils;
-import com.zq.zqbagu.model.dto.question.QuestionAddRequest;
-import com.zq.zqbagu.model.dto.question.QuestionEditRequest;
-import com.zq.zqbagu.model.dto.question.QuestionQueryRequest;
-import com.zq.zqbagu.model.dto.question.QuestionUpdateRequest;
+import com.zq.zqbagu.model.dto.question.*;
 import com.zq.zqbagu.model.entity.Question;
 import com.zq.zqbagu.model.entity.QuestionBankQuestion;
 import com.zq.zqbagu.model.entity.User;
@@ -274,5 +271,21 @@ public class QuestionController {
         Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
+
+    /**
+     * 批量删除题目（管理员可用）
+     * @param questionBatchDeleteRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/delete/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchDeleteQuestions(@RequestBody QuestionBatchDeleteRequest questionBatchDeleteRequest,
+                                                      HttpServletRequest request) {
+        ThrowUtils.throwIf(questionBatchDeleteRequest == null, ErrorCode.PARAMS_ERROR);
+        questionService.batchDeleteQuestions(questionBatchDeleteRequest.getQuestionIdList());
+        return ResultUtils.success(true);
+    }
+
 
 }
