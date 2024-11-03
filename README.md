@@ -1,6 +1,6 @@
 # 牢大八股
 线上地址：别急，先空着  
-前端地址：
+前端地址：https://github.com/958498000/bagu-froutend
 ![img.png](img/zhuye.png)
 ## 技术栈： 
 SpringBoot +  Maven + Mybatis-Plus + Mysql + Redis + ElasticSearch + HotKey + Redisson + Druid + Sa-Token + Sentinel + Nacos 
